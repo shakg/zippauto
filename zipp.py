@@ -7,6 +7,7 @@ import threading
 from oauth2client.clientsecrets import Error
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+import logging
 
 
 def greetUser():
@@ -25,11 +26,11 @@ def askForDirectoryLocation():
 def validateLocation(location):
     if(os.path.exists(location)):
         return True
-    print(">>> I did not find the file at {0} ".format(str(location)))
+    logging.error(">>> Cannot locate file at %s ", str(location))
     return False
 
 def zipFilesInDir(location):
-    print(">>> Zipping the {0}".format(str(location)))
+    logging.info(">>> Zipping the %s ", str(location))
     retval = shutil.make_archive(os.sep.join([location,str(date.today())]), "zip", str(location))
     return retval
 
@@ -96,16 +97,16 @@ def deleteFolder(location):
         for x in os.listdir(location):
             try:
                 if(deleteFile(os.sep.join([location,x]))):
-                    print("<<< File deleted. => {0}".format(x))
+                    logging.info("<<< File deleted. => %s ",x)
                 else:
-                    print("<<< Cannot delete file. => {0}".format(x))
+                    logging.warning("<<< Cannot delete file. => %s",x)
 
             except:
-                print(">>> Cannot delete file. => {0}".format(x))
+                logging.error(">>> Cannot delete file. => %s",x)
             else:
                 pass
     except:
-        print(">>> There was a problem while listing the files in folder.")
+        logging.error(">>> There was a problem while listing the files in folder.")
         return False
     else:
         return True
@@ -115,7 +116,7 @@ def deleteFile(location):
     try:
         os.remove(location)
     except EnvironmentError as ee:
-        print("$$$$$ Delete file error. =====> {0}".format(ee))
+        logging.error("<<< Delete file error. =====> %s",ee)
         return 0
     else:
         return 1
@@ -132,6 +133,12 @@ def uploadFileToDrive(pathOfCopies,drive):
     else:
         return True
 
+
+## Logger Settings
+logFile = "zippauto.log"
+logging.basicConfig(filename=logFile, level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+
+## End of Logger Settings
 pathOfCopies_Array = []
 
 pathOfCopies_First = os.sep.join(["D:","ZippAutoCopies"])
@@ -140,43 +147,43 @@ pathOfCopies_Array.append(pathOfCopies_First)
 pathOfCopies_Alternative = os.sep.join(["C:","ZippAutoCopies"])
 pathOfCopies_Array.append(pathOfCopies_Alternative)
 
+
 stopProgressBar = False
-greetUser()
-locationThatUserGave = askForDirectoryLocation()
-isValid = validateLocation(location=locationThatUserGave)
+locationToZipp = os.sep.join(['C:','Users','Machine','Downloads'])
+isValid = validateLocation(location=locationToZipp)
 if(isValid):
     threading.Thread(target=showProgressBar).start()
-    result = zipFilesInDir(locationThatUserGave)
+    result = zipFilesInDir(locationToZipp)
     if(result != None or result != ""):
         print("\n")
-        print(">>> Your zip file ({0}) has been created.\n ".format(result))
+        logging.info(">>> Zip file (%s) has been created. ", result)
         stopProgressBar = True
         moveZipFileResult = moveZipFile(result,pathOfCopies_Array)
         if(moveZipFileResult != "There is an error while creating the folder!"):
-            print(">>> Your zip file has been transfered to {0}".format(moveZipFileResult))
+            logging.info(">>> Zip file has been transfered to %s ",moveZipFileResult)
             if(deleteFile(result)):
-                print(">>> Your original zip file has been deleted from {0}".format(locationThatUserGave))
+                logging.info(">>> Original zip file has been deleted from %s",locationToZipp)
             else:
-                print(">>> Something went wrong while deleting your original zip file. ")
+                logging.error(">>> Something went wrong while deleting original zip file. ")
             
             #Auth to google and upload files.
-            print(">>> Authenticating to google.")
+            logging.info(">>> Authenticating to google.")
             drive = googleDriveAuth()
-            print(">>> Authenticated..")
-            print(">>> Uploading files to Google Drive.")
+            logging.info(">>> Authenticated..")
+            logging.info(">>> Uploading files to Google Drive.")
             
             if(uploadFileToDrive(moveZipFileResult,drive)):
-                print(">>> Upload completed.")
-                print(">>> Deleting uploaded files from {0}".format(locationThatUserGave))
-                if(deleteFolder(locationThatUserGave)):
-                    print(">>> Delete completed.")
+                logging.info(">>> Upload completed.")
+                logging.info(">>> Deleting uploaded files from %s",locationToZipp)
+                if(deleteFolder(locationToZipp)):
+                    logging.info(">>> Delete completed.")
                 else:
-                    print(">>> Cannot delete file.")
+                    logging.warning(">>> Cannot delete file.")
             else:
-                print(">>> There was a problem while uploading your file.")
+                logging.warning(">>> There was a problem while uploading the file.")
 
         else:
-            print(">>> Something went wrong while copying files.")
+            logging.warning(">>> Something went wrong while copying files.")
 
     
 

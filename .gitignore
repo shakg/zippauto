@@ -2,3 +2,4 @@
 client_secrets.json
 credentials.txt
 credentials_OLD.txt
+*.log
