@@ -1,9 +1,7 @@
 import os
 from os.path import isfile
-import time
 import shutil
 from datetime import date
-import threading
 from oauth2client.clientsecrets import Error
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -50,14 +48,6 @@ def thereIsCredentialsFile():
     else:
         return False
     
-def showProgressBar():
-    while True:
-        print(".", end="")
-        time.sleep(0.5)
-        global stopProgressBar
-        if stopProgressBar:
-            break
-
 def createFolderToCopyIfNotExists(pathOfCopies):
 
     if(os.path.exists(pathOfCopies)):
@@ -147,17 +137,13 @@ pathOfCopies_Array.append(pathOfCopies_First)
 pathOfCopies_Alternative = os.sep.join(["C:","ZippAutoCopies"])
 pathOfCopies_Array.append(pathOfCopies_Alternative)
 
-
-stopProgressBar = False
 locationToZipp = os.sep.join(['C:','Users','Machine','Downloads'])
 isValid = validateLocation(location=locationToZipp)
 if(isValid):
-    threading.Thread(target=showProgressBar).start()
     result = zipFilesInDir(locationToZipp)
     if(result != None or result != ""):
         print("\n")
         logging.info(">>> Zip file (%s) has been created. ", result)
-        stopProgressBar = True
         moveZipFileResult = moveZipFile(result,pathOfCopies_Array)
         if(moveZipFileResult != "There is an error while creating the folder!"):
             logging.info(">>> Zip file has been transfered to %s ",moveZipFileResult)
