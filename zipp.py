@@ -57,33 +57,69 @@ def showProgressBar():
         if stopProgressBar:
             break
 
-def moveZipFile(createdZipFile,pathOfCopies):
+def createFolderToCopyIfNotExists(pathOfCopies):
 
     if(os.path.exists(pathOfCopies)):
-        pass
+        return True
     else:
         try:
             os.mkdir(pathOfCopies)
-        except EnvironmentError as env:
-            return str(env)
+        except EnvironmentError:
+            return False
         else:
-            pass
+            return True
+
+def copyZippedFile(createdZipFile,pathOfCopies):
     try:
         shutil.copy(createdZipFile,pathOfCopies)
-    except IOError as e:
-        return str(e)
-    except EnvironmentError as env:
-        return str(env)
+    except IOError:
+        return False
+    except EnvironmentError:
+        return False
+    else:   
+        return True
+
+def moveZipFile(createdZipFile,pathOfCopies_Array):
+
+    for x in range(0,len(pathOfCopies_Array)):
+        if(createFolderToCopyIfNotExists(pathOfCopies_Array[x])):
+            if(copyZippedFile(createdZipFile, pathOfCopies_Array[x])):
+                return pathOfCopies_Array[x]
+        else:
+            if(x==(len(pathOfCopies_Array)-1)):
+                return "There is an error while creating the folder!"
+            else:
+                pass
+
+def deleteFolder(location):
+    try:
+        for x in os.listdir(location):
+            try:
+                if(deleteFile(os.sep.join([location,x]))):
+                    print("<<< File deleted. => {0}".format(x))
+                else:
+                    print("<<< Cannot delete file. => {0}".format(x))
+
+            except:
+                print(">>> Cannot delete file. => {0}".format(x))
+            else:
+                pass
+    except:
+        print(">>> There was a problem while listing the files in folder.")
+        return False
     else:
-        return ""
-    
-def deleteOriginalFile(location):
+        return True
+
+
+def deleteFile(location):
     try:
         os.remove(location)
-    except EnvironmentError:
+    except EnvironmentError as ee:
+        print("$$$$$ Delete file error. =====> {0}".format(ee))
         return 0
     else:
         return 1
+
 def uploadFileToDrive(pathOfCopies,drive):
     try:
         for x in os.listdir(pathOfCopies):
@@ -96,7 +132,14 @@ def uploadFileToDrive(pathOfCopies,drive):
     else:
         return True
 
-pathOfCopies = os.sep.join(["D:","ZippAutoCopies"])
+pathOfCopies_Array = []
+
+pathOfCopies_First = os.sep.join(["D:","ZippAutoCopies"])
+pathOfCopies_Array.append(pathOfCopies_First)
+
+pathOfCopies_Alternative = os.sep.join(["C:","ZippAutoCopies"])
+pathOfCopies_Array.append(pathOfCopies_Alternative)
+
 stopProgressBar = False
 greetUser()
 locationThatUserGave = askForDirectoryLocation()
@@ -108,27 +151,34 @@ if(isValid):
         print("\n")
         print(">>> Your zip file ({0}) has been created.\n ".format(result))
         stopProgressBar = True
-        moveZipFileResult = moveZipFile(result,pathOfCopies)
-        if(len(moveZipFileResult)<=1):
-            print(">>> Your zip file has been transfered to D:\\ZippAutoCopies")
-            if(deleteOriginalFile(result)):
+        moveZipFileResult = moveZipFile(result,pathOfCopies_Array)
+        if(moveZipFileResult != "There is an error while creating the folder!"):
+            print(">>> Your zip file has been transfered to {0}".format(moveZipFileResult))
+            if(deleteFile(result)):
                 print(">>> Your original zip file has been deleted from {0}".format(locationThatUserGave))
             else:
                 print(">>> Something went wrong while deleting your original zip file. ")
+            
+            #Auth to google and upload files.
+            print(">>> Authenticating to google.")
+            drive = googleDriveAuth()
+            print(">>> Authenticated..")
+            print(">>> Uploading files to Google Drive.")
+            
+            if(uploadFileToDrive(moveZipFileResult,drive)):
+                print(">>> Upload completed.")
+                print(">>> Deleting uploaded files from {0}".format(locationThatUserGave))
+                if(deleteFolder(locationThatUserGave)):
+                    print(">>> Delete completed.")
+                else:
+                    print(">>> Cannot delete file.")
+            else:
+                print(">>> There was a problem while uploading your file.")
 
         else:
             print(">>> Something went wrong while copying files.")
 
-    print(">>> Authenticating to google.")
-    drive = googleDriveAuth()
-    print(">>> Authenticated..")
-    print(">>> Uploading files to Google Drive.")
-
-    if(uploadFileToDrive(pathOfCopies,drive)):
-        print(">>> Upload completed.")
-    else:
-        print(">>> There was a problem while uploading your file.")
-
+    
 
 
 
