@@ -3,6 +3,7 @@ import time
 import shutil
 from datetime import date
 import threading
+from oauth2client.clientsecrets import Error
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 
@@ -33,6 +34,7 @@ def zipFilesInDir(location):
 
 def googleDriveAuth():
     gauth = GoogleAuth()
+    gauth.LoadCredentialsFile("credentials.txt")
     gauth.LocalWebserverAuth()
     drive = GoogleDrive(gauth)
     return drive
@@ -72,7 +74,17 @@ def deleteOriginalFile(location):
         return 0
     else:
         return 1
-
+def uploadFileToDrive(pathOfCopies,drive):
+    try:
+        for x in os.listdir(pathOfCopies):
+            f = drive.CreateFile({'title': x}) 
+            f.SetContentFile(os.path.join(pathOfCopies, x)) 
+            f.Upload() 
+            f = None
+    except Error:
+        return False
+    else:
+        return True
 
 pathOfCopies = os.sep.join(["D:","ZippAutoCopies"])
 stopProgressBar = False
@@ -99,27 +111,13 @@ if(isValid):
 
     print(">>> Authenticating to google.")
     drive = googleDriveAuth()
-    
     print(">>> Authenticated..")
     print(">>> Uploading files to Google Drive.")
 
-    threading.Thread(target=showProgressBar).start()
-    for x in os.listdir(pathOfCopies):
-
-        f = drive.CreateFile({'title': x}) 
-        f.SetContentFile(os.path.join(pathOfCopies, x)) 
-        f.Upload() 
-        # Due to a known bug in pydrive if we  
-        # don't empty the variable used to 
-        # upload the files to Google Drive the 
-        # file stays open in memory and causes a 
-        # memory leak, therefore preventing its  
-        # deletion 
-        f = None
-    
-    stopProgressBar = True
-    print(">>> Upload completed.")
-    input()
+    if(uploadFileToDrive(pathOfCopies,drive)):
+        print(">>> Upload completed.")
+    else:
+        print(">>> There was a problem while uploading your file.")
 
 
 
