@@ -3,6 +3,8 @@ import time
 import shutil
 from datetime import date
 import threading
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 
 def greetUser():
@@ -29,6 +31,11 @@ def zipFilesInDir(location):
     retval = shutil.make_archive(os.sep.join([location,str(date.today())]), "zip", str(location))
     return retval
 
+def googleDriveAuth():
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()
+    drive = GoogleDrive(gauth)
+    return drive
 
 def showProgressBar():
     while True:
@@ -38,20 +45,19 @@ def showProgressBar():
         if stopProgressBar:
             break
 
-def moveZipFile(createdZipFile):
-    newPath = os.sep.join(["D:","ZippAutoCopies"])
+def moveZipFile(createdZipFile,pathOfCopies):
 
-    if(os.path.exists(newPath)):
+    if(os.path.exists(pathOfCopies)):
         pass
     else:
         try:
-            os.mkdir(newPath)
+            os.mkdir(pathOfCopies)
         except EnvironmentError as env:
             return str(env)
         else:
             pass
     try:
-        shutil.copy(createdZipFile,newPath)
+        shutil.copy(createdZipFile,pathOfCopies)
     except IOError as e:
         return str(e)
     except EnvironmentError as env:
@@ -67,6 +73,8 @@ def deleteOriginalFile(location):
     else:
         return 1
 
+
+pathOfCopies = os.sep.join(["D:","ZippAutoCopies"])
 stopProgressBar = False
 greetUser()
 locationThatUserGave = askForDirectoryLocation()
@@ -78,7 +86,7 @@ if(isValid):
         print("\n")
         print(">>> Your zip file ({0}) has been created.\n ".format(result))
         stopProgressBar = True
-        moveZipFileResult = moveZipFile(result)
+        moveZipFileResult = moveZipFile(result,pathOfCopies)
         if(len(moveZipFileResult)<=1):
             print(">>> Your zip file has been transfered to D:\\ZippAutoCopies")
             if(deleteOriginalFile(result)):
@@ -88,7 +96,32 @@ if(isValid):
 
         else:
             print(">>> Something went wrong while copying files.")
-        
+
+    print(">>> Authenticating to google.")
+    drive = googleDriveAuth()
+    
+    print(">>> Authenticated..")
+    print(">>> Uploading files to Google Drive.")
+
+    threading.Thread(target=showProgressBar).start()
+    for x in os.listdir(pathOfCopies):
+
+        f = drive.CreateFile({'title': x}) 
+        f.SetContentFile(os.path.join(pathOfCopies, x)) 
+        f.Upload() 
+        # Due to a known bug in pydrive if we  
+        # don't empty the variable used to 
+        # upload the files to Google Drive the 
+        # file stays open in memory and causes a 
+        # memory leak, therefore preventing its  
+        # deletion 
+        f = None
+    
+    stopProgressBar = True
+    print(">>> Upload completed.")
+    input()
+
+
 
 
 
