@@ -23,8 +23,9 @@ def zipFilesInDir(location):
     retval = shutil.make_archive(os.sep.join([location,str(date.today())]), "zip", str(location))
     return retval
 
-def googleDriveAuth():
+def googleDriveAuth(secrets_file):
     gauth = GoogleAuth()
+    GoogleAuth.DEFAULT_SETTINGS["client_config_file"] = secrets_file
     if(thereIsCredentialsFile()):
         gauth.LoadCredentialsFile("credentials.txt")
     else:
@@ -116,8 +117,10 @@ def uploadFileToDrive(pathOfCopies,drive):
 
 
 ## Logger Settings
-logFile = "zippauto.log"
-logging.basicConfig(filename=logFile, level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+logDestination = os.sep.join(["D:","ZippAutoCopies","zippauto.log"])
+
+logging.basicConfig(filename=logDestination, level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+secrets_file = os.sep.join(["D:","CODE","zippauto","client_secrets.json"])
 
 ## End of Logger Settings
 pathOfCopies_Array = []
@@ -145,7 +148,7 @@ if(isValid):
             
             #Auth to google and upload files.
             logging.info(">>> Authenticating to google.")
-            drive = googleDriveAuth()
+            drive = googleDriveAuth(secrets_file)
             logging.info(">>> Authenticated..")
             logging.info(">>> Uploading files to Google Drive.")
             
