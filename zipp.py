@@ -7,15 +7,6 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import logging
 
-
-def greetUser():
-    print("======================================================")
-    print("|                                                    |")
-    print("|            Hello, welcome to zipp!                 |")
-    print("|  You can set a directory to zip it in given times. |")
-    print("|                                                    |")
-    print("======================================================")
-
 def askForDirectoryLocation():
     print("\n")
     locationToZip = input(">>> Which folder to zipp : ")
