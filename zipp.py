@@ -1,4 +1,5 @@
 import os
+from os.path import isfile
 import time
 import shutil
 from datetime import date
@@ -34,11 +35,20 @@ def zipFilesInDir(location):
 
 def googleDriveAuth():
     gauth = GoogleAuth()
-    gauth.LoadCredentialsFile("credentials.txt")
-    gauth.LocalWebserverAuth()
+    if(thereIsCredentialsFile()):
+        gauth.LoadCredentialsFile("credentials.txt")
+    else:
+        gauth.LocalWebserverAuth()
+        gauth.SaveCredentialsFile("credentials.txt")
     drive = GoogleDrive(gauth)
     return drive
 
+def thereIsCredentialsFile():
+    if(os.path.isfile(os.sep.join([os.path.abspath(os.getcwd()),"credentials.txt"]))):
+        return True
+    else:
+        return False
+    
 def showProgressBar():
     while True:
         print(".", end="")
