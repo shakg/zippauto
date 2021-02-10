@@ -3,3 +3,6 @@ client_secrets.json
 credentials.txt
 credentials_OLD.txt
 *.log
+__pycache__/gui.cpython-39.pyc
+backuplocation.txt
+zipplocation.txt

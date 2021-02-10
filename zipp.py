@@ -6,6 +6,7 @@ from oauth2client.clientsecrets import Error
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import logging
+import gui
 
 def askForDirectoryLocation():
     print("\n")
@@ -115,6 +116,12 @@ def uploadFileToDrive(pathOfCopies,drive):
     else:
         return True
 
+def check_if_settings_files_exists():
+    if(os.path.exists("zipplocation.txt") == False):
+        return False
+    if(os.path.exists("backuplocation.txt") == False):
+        return False
+    return True
 
 ## Logger Settings
 logDestination = os.sep.join(["D:","ZippAutoCopies","zippauto.log"])
@@ -123,47 +130,50 @@ logging.basicConfig(filename=logDestination, level=logging.DEBUG,format='%(ascti
 secrets_file = os.sep.join(["D:","CODE","zippauto","client_secrets.json"])
 
 ## End of Logger Settings
+
+if(check_if_settings_files_exists()):
+    pass
+else:
+    gui.main()
+
 pathOfCopies_Array = []
 
-pathOfCopies_First = os.sep.join(["D:","ZippAutoCopies"])
-pathOfCopies_Array.append(pathOfCopies_First)
+f = open("zipplocation.txt", "r")
+locationToZipp = f.read()
 
-pathOfCopies_Alternative = os.sep.join(["C:","ZippAutoCopies"])
-pathOfCopies_Array.append(pathOfCopies_Alternative)
+f = open("backuplocation.txt", "r")
+pathOfCopies_Array.append(f.read())
 
-locationToZipp = os.sep.join(['C:','Users','Machine','Downloads'])
-isValid = validateLocation(location=locationToZipp)
-if(isValid):
-    result = zipFilesInDir(locationToZipp)
-    if(result != None or result != ""):
-        print("\n")
-        logging.info(">>> Zip file (%s) has been created. ", result)
-        moveZipFileResult = moveZipFile(result,pathOfCopies_Array)
-        if(moveZipFileResult != "There is an error while creating the folder!"):
-            logging.info(">>> Zip file has been transfered to %s ",moveZipFileResult)
-            if(deleteFile(result)):
-                logging.info(">>> Original zip file has been deleted from %s",locationToZipp)
-            else:
-                logging.error(">>> Something went wrong while deleting original zip file. ")
-            
-            #Auth to google and upload files.
-            logging.info(">>> Authenticating to google.")
-            drive = googleDriveAuth(secrets_file)
-            logging.info(">>> Authenticated..")
-            logging.info(">>> Uploading files to Google Drive.")
-            
-            if(uploadFileToDrive(moveZipFileResult,drive)):
-                logging.info(">>> Upload completed.")
-                logging.info(">>> Deleting uploaded files from %s",locationToZipp)
-                if(deleteFolder(locationToZipp)):
-                    logging.info(">>> Delete completed.")
-                else:
-                    logging.warning(">>> Cannot delete file.")
-            else:
-                logging.warning(">>> There was a problem while uploading the file.")
-
+result = zipFilesInDir(locationToZipp)
+if(result != None or result != ""):
+    print("\n")
+    logging.info(">>> Zip file (%s) has been created. ", result)
+    moveZipFileResult = moveZipFile(result,pathOfCopies_Array)
+    if(moveZipFileResult != "There is an error while creating the folder!"):
+        logging.info(">>> Zip file has been transfered to %s ",moveZipFileResult)
+        if(deleteFile(result)):
+            logging.info(">>> Original zip file has been deleted from %s",locationToZipp)
         else:
-            logging.warning(">>> Something went wrong while copying files.")
+            logging.error(">>> Something went wrong while deleting original zip file. ")
+        
+        #Auth to google and upload files.
+        logging.info(">>> Authenticating to google.")
+        drive = googleDriveAuth(secrets_file)
+        logging.info(">>> Authenticated..")
+        logging.info(">>> Uploading files to Google Drive.")
+        
+        if(uploadFileToDrive(moveZipFileResult,drive)):
+            logging.info(">>> Upload completed.")
+            logging.info(">>> Deleting uploaded files from %s",locationToZipp)
+            if(deleteFolder(locationToZipp)):
+                logging.info(">>> Delete completed.")
+            else:
+                logging.warning(">>> Cannot delete file.")
+        else:
+            logging.warning(">>> There was a problem while uploading the file.")
+
+    else:
+        logging.warning(">>> Something went wrong while copying files.")
 
     
 
