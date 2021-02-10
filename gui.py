@@ -38,12 +38,12 @@ def apply_selected_directory(sender, data):
 
 
 def set_screen():
-    set_main_window_size(800,600)
+    set_main_window_size(1000,800)
     set_global_font_scale(1.20)
     set_theme("Dark")
     set_style_window_padding(30,30)
 
-    with window("ZippAuto Configuration", width=780, height=650):
+    with window("ZippAuto Configuration", width=980, height=750):
         set_window_pos("ZippAuto Configuration", 0, 0)
         add_text("Welcome to autozipp!")
         add_text("You need to specify which folder to zipp & upload to google drive and backup folder")
@@ -68,4 +68,5 @@ def set_screen():
 def main():
     set_screen()
     start_dearpygui()
+
 
